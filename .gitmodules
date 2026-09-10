@@ -1,0 +1,6 @@
+[submodule "BurnCoastSim"]
+	path = BurnCoastSim
+	url = https://github.com/HEEV/BurnCoastSim.git
+[submodule "CarDisplay"]
+	path = CarDisplay
+	url = https://github.com/HEEV/CarDisplay.git

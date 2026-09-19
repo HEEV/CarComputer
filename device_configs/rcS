@@ -1,0 +1,4 @@
+#!/bin/sh
+mount -t sysfs sysfs /sys
+mount -t proc proc /proc
+modprobe g_ether

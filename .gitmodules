@@ -4,3 +4,18 @@
 [submodule "CarDisplay"]
 	path = CarDisplay
 	url = https://github.com/HEEV/CarDisplay.git
+[submodule "SensorHub"]
+	path = SensorHub
+	url = https://github.com/HEEV/SensorHub
+[submodule "linux"]
+	path = linux
+	url = https://github.com/raspberrypi/linux
+	shallow = true
+[submodule "firmware"]
+	path = firmware
+	url = https://github.com/raspberrypi/firmware
+	shallow = true
+[submodule "busybox"]
+	path = busybox
+	url = https://git.busybox.net/busybox/
+	shallow = true

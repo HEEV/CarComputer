@@ -44,7 +44,7 @@ cd ../..
 
 cp device_configs/inittab build/root/etc
 cp device_configs/rcS build/root/etc/init.d
-cp /usr/aarch64-linux-gnu/lib/* build/root/lib
+cp -r /usr/aarch64-linux-gnu/lib/* build/root/lib
 
 # Create Image 
 dd if=/dev/zero of=data.img bs=1M count=512
@@ -64,14 +64,15 @@ echo
 echo 
 echo w # Write changes
 ) | sudo fdisk ./data.img
-sudo losetup -fP ./data.img  # Mounts as /dev/loopX  
-sudo mkfs.vfat /dev/loopXp1  # Boot partition  
-sudo mkfs.ext4 /dev/loopXp2
-sudo mount /dev/loopXp1 /mnt
-sudo cp build/boot/* /mnt
+sudo losetup -P /dev/loop1 ./data.img  # Mounts as /dev/loopX  
+sudo mkfs.vfat /dev/loop1p1  # Boot partition  
+sudo mkfs.ext4 /dev/loop1p2
+sudo mount /dev/loop1p1 /mnt
+sudo cp -r build/boot/* /mnt
 sudo umount /mnt
-sudo mount /dev/loopXp2 /mnt
-sudo cp build/root/* /mnt
+sudo mount /dev/loop1p2 /mnt
+sudo cp -r build/root/* /mnt
 sudo umount /mnt
+sudo losetup -d /dev/loop1
 
 echo "Now go forth and conquer in the name of Jesus Christ our Lord"

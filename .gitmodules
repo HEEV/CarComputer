@@ -19,3 +19,6 @@
 	path = busybox
 	url = https://git.busybox.net/busybox/
 	shallow = true
+[submodule "app/lvgl"]
+	path = app/lvgl
+	url = https://github.com/lvgl/lvgl/

@@ -41,10 +41,17 @@ mkdir -p etc/init.d proc sys dev tmp var/log
 chmod 777 tmp
 sudo mknod dev/console c 5 1
 cd ../..
-
 cp device_configs/inittab build/root/etc
 cp device_configs/rcS build/root/etc/init.d
+sudo chmod +x build/root/etc/init.d/rcS
 cp -r /usr/aarch64-linux-gnu/lib/* build/root/lib
+
+# Compile and Copy App
+cd app
+cmake -B build -GNinja -DCMAKE_TOOLCHAIN_FILE=./cmake/user_cross_compile_setup.cmake
+cmake --build build
+cp build/bin/lvglsim ../build/root
+cd ..
 
 # Create Image 
 dd if=/dev/zero of=data.img bs=1M count=512

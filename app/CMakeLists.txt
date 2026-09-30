@@ -71,9 +71,10 @@ get_property(BACKEND_SRC GLOBAL PROPERTY LV_LINUX_BACKEND_SRC)
 add_library(lvgl_linux ${LV_LINUX_SRC} ${BACKEND_SRC})
 
 set(LIBS lvgl::lvgl)
-
+add_subdirectory(../SensorHub/ ${CMAKE_BINARY_DIR}/sensorhub EXCLUDE_FROM_ALL)
+list(APPEND LIBS sensorhub)
 target_link_libraries(lvgl_linux PUBLIC ${LIBS})
-add_executable(lvglsim src/main.c)
+add_executable(lvglsim src/main.c ../CarDisplay/primary/race_dashboard.c ../CarDisplay/primary/fonts/speed_digits_224.c)
 target_link_libraries(lvglsim PUBLIC lvgl_linux ${EXTRA_LIBS})
 
 if(CONFIG_LV_USE_DEMO_TRUCK)

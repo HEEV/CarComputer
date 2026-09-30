@@ -3,13 +3,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <lvgl/lvgl.h>
 
 #include "lib/driver_backends.h"
 #include "lib/simulator_util.h"
 #include "lib/simulator_settings.h"
-#include "../../CarDisplay/src/race_dashboard.h"
+
+#include "../../CarDisplay/primary/race_dashboard.h"
+#include "../../SensorHub/src/sensorhub/serial.h"
+#include "../../SensorHub/src/sensorhub/sensorhub.h"
 
 /* Internal functions */
 static void configure_simulator(int argc, char ** argv);
@@ -132,6 +137,8 @@ static void configure_simulator(int argc, char ** argv)
     }
 }
 
+sh_parser_t parser;
+
 int main(int argc, char ** argv)
 {
 
@@ -146,6 +153,23 @@ int main(int argc, char ** argv)
     }
 
     race_dashboard_create(lv_scr_act());
+
+    const char *device = (argc > 1) ? argv[1] : SH_DEFAULT_PORT;
+    sh_parser_t parser;
+    sh_packet_t packet;
+    sh_status_t status;
+    int fd;
+
+    /* Open once.  Reopening resets the Nano through its DTR circuit. */
+    fd = sh_serial_open(device);
+
+    if (fd < 0) {
+        fprintf(stderr, "open %s: %s\n", device, strerror(errno));
+        return 1;
+    }
+
+    sh_parser_init(&parser);
+    printf("Listening on %s at 115200 baud\n", device);
 
     race_telemetry_t t = {
         .speed_mph = 42.3f,
@@ -166,8 +190,24 @@ int main(int argc, char ** argv)
             ms = LV_DEF_REFR_PERIOD;
         }
         usleep(ms * 1000);
+
+        memset(&packet, 0, sizeof(packet));
+
+        status = sh_serial_read_packet(fd, &parser, &packet);
+
+        if (status == SH_E_INTERRUPTED) {
+            continue; /* a signal; the while condition rechecks g_stop */
+        }
+
+        if (status != SH_OK) {
+            fprintf(stderr, "\n%s", sh_strstatus(status));
+            if (status == SH_E_IO) fprintf(stderr, ": %s", strerror(errno));
+            fprintf(stderr, "\n");
+            break;
+        }
+        t.speed_mph = packet.speed;
+
         race_dashboard_set_telemetry(&t);
-        t.distance_ft += 10;
     }
 
     return 0;

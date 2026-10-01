@@ -47,10 +47,10 @@ sudo chmod +x build/root/etc/init.d/rcS
 cp -r /usr/aarch64-linux-gnu/lib/* build/root/lib
 
 # Compile and Copy App
-cd app
-cmake -B build -GNinja -DCMAKE_TOOLCHAIN_FILE=./cmake/user_cross_compile_setup.cmake
-cmake --build build
-cp build/bin/lvglsim ../build/root
+cd CarDisplay
+cmake -B build -GNinja -DCMAKE_TOOLCHAIN_FILE=./cmake/cross.cmake
+cmake --build build -j$(nproc)
+cp bin/main ../build/root
 cd ..
 
 # Create Image 
@@ -73,7 +73,7 @@ echo w # Write changes
 ) | sudo fdisk ./data.img
 sudo losetup -P /dev/loop1 ./data.img  # Mounts as /dev/loopX  
 sudo mkfs.vfat /dev/loop1p1  # Boot partition  
-sudo mkfs.ext4 /dev/loop1p2
+sudo mkfs.ext4 /dev/loop1p2  # Root partition 
 sudo mount /dev/loop1p1 /mnt
 sudo cp -r build/boot/* /mnt
 sudo umount /mnt
@@ -82,4 +82,4 @@ sudo cp -r build/root/* /mnt
 sudo umount /mnt
 sudo losetup -d /dev/loop1
 
-echo "Now go forth and conquer in the name of Jesus Christ our Lord"
+echo "Now go forth and conquer in the name of Jesus Christ our Lord!"

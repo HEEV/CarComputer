@@ -54,14 +54,14 @@ cp bin/main ../build/root
 cd ..
 
 # Create Image 
-dd if=/dev/zero of=data.img bs=1M count=512
+dd if=/dev/zero of=data.img bs=1M count=384
 (
 echo o # Create a new empty DOS partition table
 echo n # Add a new partition
 echo p # Primary partition
 echo 1 # Partition number
 echo 2048  # First sector
-echo +100M  # Last sector
+echo +50M  # Last sector
 echo t  # Set type
 echo c  # Set to FAT32
 echo n

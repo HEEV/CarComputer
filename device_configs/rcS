@@ -1,4 +1,5 @@
 #!/bin/sh
 mount -t sysfs sysfs /sys
 mount -t proc proc /proc
+until [ -e /dev/ttyUSB0 ]; do sleep 0.1; done
 /main &

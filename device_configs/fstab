@@ -1,0 +1,7 @@
+# <device> <mount point> <type> <options> <dump> <pass>
+/dev/mmcblk0p2  /          ext4   defaults,noatime     0 1
+/dev/mmcblk0p1  /boot      vfat   defaults,noatime     0 2
+proc            /proc      proc   defaults             0 0
+sysfs           /sys       sysfs  defaults             0 0
+devpts          /dev/pts   devpts defaults             0 0
+tmpfs           /tmp       tmpfs  nosuid,nodev,mode=1777 0 0

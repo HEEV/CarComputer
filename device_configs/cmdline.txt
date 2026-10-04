@@ -1,1 +1,1 @@
-console=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait quiet
+console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait quiet loglevel=3 vt.global_cursor_default=0 logo.nologo

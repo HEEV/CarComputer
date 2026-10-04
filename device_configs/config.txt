@@ -1,9 +1,22 @@
+# Pi 5 (BCM2712). The bootloader lives in the board's SPI EEPROM, so this
+# file plus the kernel and the dtb is the whole boot partition; there is no
+# start.elf or bootcode.bin to ship. A non-empty config.txt is also what
+# marks the partition bootable on this board, so do not empty it out.
+
+# Deliberately modest clocks: this thing lives in a hot shell with no fan.
+# Note that the Pi 5 firmware will not take arm_freq below 1500, so these two
+# read as a request rather than the 1 GHz they name.
 arm_freq=1000
 arm_freq_min=1000
 gpu_freq=300
 force_turbo=1
-arm_64bit=1
+
+# Serial console on the 40-pin header, which is the only way in once the app
+# owns the screen.
 enable_uart=1
+
+# arm_64bit is not set on purpose: the Pi 5 has no 32-bit kernel to choose
+# between, and the firmware ignores the flag.
 
 kernel=kernel8.img
 device_tree=bcm2712-rpi-5-b.dtb

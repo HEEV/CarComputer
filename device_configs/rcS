@@ -1,5 +1,36 @@
 #!/bin/sh
+# Busybox init's single sysinit action. Keep it quick and keep it from
+# blocking: anything that waits forever here is a car with a blank screen and
+# no shell to find out why.
+
+mount -t proc  proc  /proc
 mount -t sysfs sysfs /sys
-mount -t proc proc /proc
-until [ -e /dev/ttyUSB0 ]; do sleep 0.1; done
-/main &
+
+# Belt and braces; the kernel already does this via CONFIG_DEVTMPFS_MOUNT.
+mountpoint -q /dev 2>/dev/null || mount -t devtmpfs devtmpfs /dev
+
+mount -t tmpfs -o nosuid,nodev,mode=1777 tmpfs /tmp
+mkdir -p /dev/pts /dev/shm
+mount -t devpts devpts /dev/pts 2>/dev/null
+mount -t tmpfs  -o nosuid,nodev tmpfs /dev/shm 2>/dev/null
+
+hostname -F /etc/hostname 2>/dev/null
+
+# The app draws to /dev/fb0, so wait for it, but not forever.
+i=0
+while [ ! -e /dev/fb0 ] && [ "$i" -lt 50 ]; do
+    sleep 0.1
+    i=$((i + 1))
+done
+[ -e /dev/fb0 ] || echo "rcS: no /dev/fb0 after 5s; starting anyway" >&2
+
+# The Arduino is deliberately not waited for: unplugged, slow to enumerate or
+# dead on the bench should all still get you a dashboard. Respawning for the
+# same reason, so a crash costs a blink rather than the rest of the race.
+(
+    while :; do
+        /main
+        echo "rcS: /main exited with $?; restarting in 1s" >&2
+        sleep 1
+    done
+) </dev/console >/dev/console 2>&1 &

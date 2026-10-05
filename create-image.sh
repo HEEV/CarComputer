@@ -23,9 +23,11 @@ readonly ROOT_STAGE="$BUILD/root"
 readonly IMAGE="$TOP/data.img"
 readonly DEPS="$TOP/compile_configs/build-deps.txt"
 
-readonly BOOT_MIB=64
+# Boot holds a 24 MB kernel, a dtb and the overlays, so 48 leaves room for a
+# second kernel to bisect against.
+readonly BOOT_MIB=48
 # Root is sized from its contents plus this slack, so it cannot be outgrown.
-readonly ROOT_SLACK_MIB=96
+readonly ROOT_SLACK_MIB=64
 readonly ALIGN_MIB=1
 
 export ARCH=arm64
@@ -234,21 +236,18 @@ stage_kernel() {
     fi
 
     make -C "$KERNEL_SRC" olddefconfig
-    make -C "$KERNEL_SRC" -j"$JOBS" Image modules dtbs
+    check_kernel_config
 
-    # INSTALL_MOD_STRIP matters more than it looks: unstripped aarch64 modules
-    # carry enough debug info to triple the size of the root filesystem.
-    make -C "$KERNEL_SRC" INSTALL_MOD_PATH="$ROOT_STAGE" INSTALL_MOD_STRIP=1 \
-        modules_install
+    # No modules at all: the hardware is fixed, everything needed is built in,
+    # and a module nothing loads is a driver that silently does not exist.
+    make -C "$KERNEL_SRC" -j"$JOBS" Image dtbs
 
     put 644 "$KERNEL_SRC/arch/arm64/boot/Image" "$BOOT_STAGE/$KERNEL_IMAGE"
     put 644 "$KERNEL_SRC/arch/arm64/boot/dts/broadcom/$KERNEL_DTB" "$BOOT_STAGE"
 
-    # Overlays come from the kernel tree, not from the firmware repo, so they
-    # can never be a version behind the kernel that loads them. This is also
-    # why the firmware submodule is not needed at all: a Pi 5 keeps its
-    # bootloader in SPI EEPROM, so start.elf and fixup.dat are dead weight
-    # there, and the dtb is built right here.
+    # Overlays come from the kernel tree, so they cannot be a version behind
+    # the kernel that loads them. This is also why the firmware submodule is
+    # not needed: a Pi 5 keeps its bootloader in EEPROM.
     local overlays="$KERNEL_SRC/arch/arm64/boot/dts/overlays"
     if [ -d "$overlays" ]; then
         mkdir -p "$BOOT_STAGE/overlays"
@@ -263,9 +262,34 @@ stage_kernel() {
     put 644 "$TOP/device_configs/cmdline.txt" "$BOOT_STAGE"
     put 644 "$TOP/device_configs/config.txt" "$BOOT_STAGE"
 
-    local modules_size="none"
-    [ -d "$ROOT_STAGE/lib/modules" ] && modules_size="$(du -sh "$ROOT_STAGE/lib/modules" | cut -f1)"
-    note "kernel $(du -h "$BOOT_STAGE/$KERNEL_IMAGE" | cut -f1), modules $modules_size"
+    note "kernel $(du -h "$BOOT_STAGE/$KERNEL_IMAGE" | cut -f1), no modules"
+}
+
+# The assertion lines from required_symbols.txt: either CONFIG_X=y or the
+# "# CONFIG_X is not set" spelling kconfig uses, both matched literally
+# against .config so that negatives are checked as strictly as positives.
+required_symbols() {
+    grep -E '^(CONFIG_[A-Z0-9_]+=|# CONFIG_[A-Z0-9_]+ is not set$)' \
+        "$TOP/compile_configs/required_symbols.txt"
+}
+
+# A trimmed config is only safe to keep trimming if something checks that the
+# drivers on the boot, display and telemetry path survived it. With no
+# initramfs and nothing loading modules, a symbol that slipped from y to m or
+# n is a board that does not come up, and the symptom shows up on the car.
+check_kernel_config() {
+    local required="$TOP/compile_configs/required_symbols.txt"
+    local missing
+    missing="$(required_symbols | grep -Fxv -f "$KERNEL_SRC/.config" || true)"
+
+    if [ -n "$missing" ]; then
+        printf '%serror:%s the kernel config lost drivers this board needs:\n' \
+            "$C_RED" "$C_OFF" >&2
+        printf '%s\n' "$missing" | sed 's/^/  - /' >&2
+        printf '\nSee %s.\n' "${required#"$TOP"/}" >&2
+        exit 1
+    fi
+    note "$(grep -c '=y$' "$KERNEL_SRC/.config") symbols built in, $(grep -c '=m$' "$KERNEL_SRC/.config") modules"
 }
 
 stage_busybox() {
@@ -308,7 +332,7 @@ stage_busybox() {
 
 stage_rootfs() {
     say "rootfs"
-    mkdir -p "$ROOT_STAGE"/{etc/init.d,proc,sys,dev,tmp,var/log,run,mnt}
+    mkdir -p "$ROOT_STAGE"/{etc/init.d,proc,sys,dev,tmp,var/log/dash,run,mnt,boot}
 
     # 1777, not 777: without the sticky bit anyone can unlink anyone's
     # temporary files. Harmless on a single-user car, free to get right.
@@ -317,11 +341,25 @@ stage_rootfs() {
     put 644 "$TOP/device_configs/inittab" "$ROOT_STAGE/etc/inittab"
     put 755 "$TOP/device_configs/rcS" "$ROOT_STAGE/etc/init.d/rcS"
     put 644 "$TOP/device_configs/fstab" "$ROOT_STAGE/etc/fstab"
+    put 644 "$TOP/device_configs/svlogd-config" "$ROOT_STAGE/var/log/dash/config"
+
+    mkdir -p "$ROOT_STAGE/etc/service/dash/log"
+    put 755 "$TOP/device_configs/service/dash/run" "$ROOT_STAGE/etc/service/dash/run"
+    put 755 "$TOP/device_configs/service/dash/log/run" "$ROOT_STAGE/etc/service/dash/log/run"
 
     printf 'carcomputer\n' > "$ROOT_STAGE/etc/hostname"
     printf 'root:x:0:0:root:/root:/bin/sh\n' > "$ROOT_STAGE/etc/passwd"
     printf 'root:x:0:\n' > "$ROOT_STAGE/etc/group"
     mkdir -p "$ROOT_STAGE/root"
+
+    # Every applet init and the service scripts name. A missing one shows up
+    # as a dashboard that never starts, or one that keeps no log.
+    local applet
+    for applet in runsvdir runsv svlogd mount hostname sh; do
+        [ -n "$(find "$ROOT_STAGE" -maxdepth 3 \( -type f -o -type l \) \
+                -name "$applet" -print -quit)" ] ||
+            die "busybox has no $applet applet, but the boot scripts call it"
+    done
 }
 
 stage_app() {

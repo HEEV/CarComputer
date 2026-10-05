@@ -1,1 +1,1 @@
-console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait quiet loglevel=3 vt.global_cursor_default=0 logo.nologo
+console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=noatime rootwait quiet loglevel=3 vt.global_cursor_default=0 logo.nologo video=HDMI-A-1:1024x600@60eD video=HDMI-A-2:1024x600@60eD

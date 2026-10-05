@@ -1,5 +1,20 @@
 #!/bin/sh
-mount -t sysfs sysfs /sys
+# Busybox init's single sysinit action. Keep it quick and keep it from
+# blocking: a wait that never ends here is a blank screen and no shell.
+
+# /proc first, so mount -a can tell what is mounted already.
 mount -t proc proc /proc
-until [ -e /dev/ttyUSB0 ]; do sleep 0.1; done
-/main &
+mkdir -p /dev/pts /dev/shm
+mount -a
+
+hostname -F /etc/hostname 2>/dev/null
+
+# The app draws to /dev/fb0, so wait for it, but not forever.
+i=0
+while [ ! -e /dev/fb0 ] && [ "$i" -lt 50 ]; do
+    sleep 0.1
+    i=$((i + 1))
+done
+[ -e /dev/fb0 ] || echo "rcS: no /dev/fb0 after 5s; starting anyway"
+
+# The dashboard is runsvdir's job, out of /etc/service. inittab respawns it.

@@ -1,0 +1,84 @@
+# .config lines this board cannot boot without, checked after olddefconfig.
+# Lines are matched literally, so negatives belong here too. Derived from the
+# compatible strings in bcm2712-rpi-5-b.dtb, not from guesswork.
+
+# The premises of the trim. Without these the rest is not what it claims:
+# a module is a driver that silently does not exist, because there is no
+# initramfs and nothing loads modules.
+# CONFIG_MODULES is not set
+# CONFIG_FTRACE is not set
+
+# Platform
+CONFIG_ARCH_BCM2835=y
+CONFIG_PCIE_BRCMSTB=y
+CONFIG_MFD_RP1=y
+CONFIG_PINCTRL_RP1=y
+CONFIG_RASPBERRYPI_FIRMWARE=y
+CONFIG_BCM2835_MBOX=y
+CONFIG_RASPBERRYPI_POWER=y
+
+# Root filesystem. mmc0 in the dtb is brcm,bcm2712-sdhci.
+CONFIG_MMC=y
+CONFIG_MMC_SDHCI=y
+CONFIG_MMC_SDHCI_BRCMSTB=y
+CONFIG_MMC_BLOCK=y
+CONFIG_BLK_DEV=y
+CONFIG_EXT4_FS=y
+CONFIG_VFAT_FS=y
+CONFIG_NLS_CODEPAGE_437=y
+CONFIG_NLS_ISO8859_1=y
+
+# /dev and friends, since rcS mounts them and init needs /dev/console
+CONFIG_DEVTMPFS=y
+CONFIG_DEVTMPFS_MOUNT=y
+CONFIG_TMPFS=y
+CONFIG_PROC_FS=y
+CONFIG_SYSFS=y
+CONFIG_UNIX98_PTYS=y
+
+# The display, on the KMS path. The kernel owns HDMI here, which is what lets
+# cmdline.txt force the output on with no monitor attached; the firmware
+# framebuffer could not do that. fbdev emulation keeps /dev/fb0 for the app,
+# so nothing in CarDisplay changes. SND_SOC is a hard dependency of DRM_VC4.
+CONFIG_FB=y
+CONFIG_FB_CORE=y
+CONFIG_DRM=y
+CONFIG_DRM_VC4=y
+CONFIG_DRM_FBDEV_EMULATION=y
+CONFIG_SND=y
+CONFIG_SND_SOC=y
+
+# Serial console on the 40-pin header
+CONFIG_SERIAL_AMBA_PL011=y
+CONFIG_SERIAL_AMBA_PL011_CONSOLE=y
+
+# USB, and the serial adapters the sensor and BMS boards turn up as. Genuine
+# Arduinos are CDC-ACM, clones are usually CH340, the BMS cable is commonly
+# CP210x or FTDI, so all of them are built in rather than picked by guess.
+CONFIG_USB=y
+CONFIG_USB_XHCI_HCD=y
+CONFIG_USB_DWC3=y
+CONFIG_USB_SERIAL=y
+CONFIG_USB_ACM=y
+CONFIG_USB_SERIAL_CH341=y
+CONFIG_USB_SERIAL_CP210X=y
+CONFIG_USB_SERIAL_FTDI_SIO=y
+CONFIG_USB_SERIAL_PL2303=y
+
+# It lives in a hot shell with no fan, so keep the thermal path and the
+# watchdog that recovers a hung dashboard.
+CONFIG_BCM2711_THERMAL=y
+CONFIG_THERMAL=y
+CONFIG_CPU_FREQ=y
+CONFIG_BCM2835_WDT=y
+
+# The devices in the dtb from families that are otherwise swept away wholesale
+# (38 RTC chips, 50 HID gamepads, 22 hwmon chips and so on came along for the
+# ride when MODULES went off). These are the ones the board really has.
+CONFIG_RTC_DRV_RPI=y
+CONFIG_SENSORS_PWM_FAN=y
+CONFIG_SENSORS_RP1_ADC=y
+CONFIG_KEYBOARD_GPIO=y
+CONFIG_LEDS_GPIO=y
+CONFIG_GPIO_BRCMSTB=y
+CONFIG_HID_GENERIC=y

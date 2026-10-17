@@ -4,6 +4,6 @@ gpu_freq=300
 force_turbo=1
 arm_64bit=1
 enable_uart=1
-
+dtoverlay=dwc2
 kernel=kernel8.img
 device_tree=bcm2712-rpi-5-b.dtb

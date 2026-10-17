@@ -1,0 +1,9 @@
+#!/bin/sh
+# Where the dashboard's output goes. runsv owns this, so if the logger dies it
+# gets restarted instead of taking the dashboard down with it, which is the
+# whole reason this is a supervised service rather than a shell pipeline.
+#
+# svlogd timestamps every line and rotates by the size limits in
+# /var/log/dash/config. Kernel messages still go straight to the serial
+# console; read this back with `tail -f /var/log/dash/current`.
+exec svlogd -tt /var/log/dash

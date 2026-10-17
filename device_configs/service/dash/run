@@ -1,0 +1,21 @@
+#!/bin/sh
+# The dashboard. runsv restarts it whenever it exits, so a crash costs a blink
+# rather than the rest of the race.
+#
+# The framebuffer is checked first because the app does not: it ignores what
+# hal_init() returns, so a missing /dev/fb0 becomes a null display and a
+# segfault, once a second, forever. The firmware creates fb0 at boot from the
+# HDMI hotplug signal and never revisits it, so if it is absent the panel was
+# not awake when the Pi booted and power-cycling the Pi is the fix.
+#
+# The Arduino is deliberately not waited for: unplugged, slow to enumerate or
+# dead on the bench should all still get you a dashboard.
+if [ ! -e /dev/fb0 ]; then
+    echo "no /dev/fb0: the panel was not detected at boot, so the firmware made"
+    echo "no framebuffer. Check the HDMI cable and power-cycle the Pi."
+    sleep 5
+    exit 1
+fi
+
+exec 2>&1
+exec /main

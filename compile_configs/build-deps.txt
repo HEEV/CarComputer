@@ -1,0 +1,33 @@
+# Debian/Ubuntu packages the build needs. One per line; blanks and comments
+# are ignored. The Dockerfile installs from this list and create-image.sh
+# prints it when a tool is missing, so there is one copy to keep current.
+#
+# An aarch64 cross toolchain is not here: on an x86 host it comes from
+# crossbuild-essential-arm64, and on an aarch64 host the native
+# build-essential already is the target toolchain.
+
+git
+ca-certificates
+build-essential
+make
+cmake
+ninja-build
+pkg-config
+
+# kernel
+bc
+bison
+flex
+libssl-dev
+libelf-dev
+kmod
+xz-utils
+
+# image assembly
+dosfstools
+mtools
+e2fsprogs
+fdisk
+fakeroot
+
+file

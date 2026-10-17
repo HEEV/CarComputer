@@ -59,6 +59,14 @@
 # Start an "askfirst" shell on the console (whatever that may be)
 ttyAMA0::askfirst:-/bin/sh
 
+# And one on the Pi 5's debug UART, which is wired straight to the SoC. If the
+# RP1 southbridge carrying ttyAMA0 above fails to come up, this is the way in.
+ttyAMA10::askfirst:-/bin/sh
+
+# The dashboard, supervised. runsvdir starts /etc/service/dash and restarts it
+# and its logger independently if either dies.
+::respawn:/usr/bin/runsvdir /etc/service
+
 
 # /sbin/getty invocations for selected ttys
 #tty4::respawn:/sbin/getty 38400 tty5

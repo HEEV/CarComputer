@@ -2,7 +2,7 @@
 
 To clone: 
 ```bash
-git clone --recursive --depth 1 https://github.com/HEEV/CarComputer.git
+git clone --recursive --depth 1 --shallow-submodules https://github.com/HEEV/CarComputer.git
 ```
 
 To build:

@@ -47,7 +47,7 @@
 # Boot-time system configuration/initialization script.
 # This is run first except when booting in single-user mode.
 #
-::sysinit:/etc/init.d/rcS
+::respawn:/etc/init.d/rcS
 
 # /bin/sh invocations on selected ttys
 #

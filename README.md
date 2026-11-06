@@ -7,7 +7,7 @@ Linux kernel, a static busybox userspace, and
 ## Build
 
 ```bash
-git clone --recursive --depth 1 https://github.com/HEEV/CarComputer.git
+git clone --recursive --depth 1 --shallow-submodules https://github.com/HEEV/CarComputer.git
 cd CarComputer
 ./create-image.sh          # Linux
 ./build-in-docker.sh       # macOS, or anywhere without the Linux tooling

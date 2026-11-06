@@ -4,10 +4,8 @@
 
 # /proc first, so mount -a can tell what is mounted already.
 mount -t proc proc /proc
-mkdir -p /dev/pts /dev/shm
+mkdir -p /dev/pts
 mount -a
-
-hostname -F /etc/hostname 2>/dev/null
 
 # The app draws to /dev/fb0, so wait for it, but not forever.
 i=0

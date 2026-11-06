@@ -7,10 +7,7 @@ arm_freq=1500
 
 # Serial console on the 40-pin header.
 enable_uart=1
-
-# KMS, so the kernel drives HDMI rather than the firmware. That is what makes
-# booting with the panel unplugged work: see the forced mode in cmdline.txt.
-dtoverlay=vc4-kms-v3d-pi5
-
+dtoverlay=dwc2
 kernel=kernel8.img
 device_tree=bcm2712-rpi-5-b.dtb
+dtoverlay=vc4-kms-v3d,noaudio

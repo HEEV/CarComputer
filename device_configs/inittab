@@ -48,6 +48,7 @@
 # This is run first except when booting in single-user mode.
 #
 ::respawn:/etc/init.d/rcS
+::once:/etc/init.d/usbether
 
 # /bin/sh invocations on selected ttys
 #

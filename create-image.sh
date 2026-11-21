@@ -3,7 +3,7 @@
 # Export compile variables
 export ARCH=arm64
 export CROSS_COMPILE=aarch64-linux-gnu-
-
+export PRIMARY=$(pwd)
 
 # Create Build directories
 mkdir build
@@ -23,7 +23,6 @@ cd ..
 
 # Copy firmware files
 cd firmware
-cp boot/{start.elf,fixup.dat} ../build/boot/
 cp -r boot/overlays ../build/boot
 cd ..
 cp device_configs/{cmdline.txt,config.txt} build/boot
@@ -35,16 +34,45 @@ make -j$(nproc)
 make INSTALL_PATH=../build/root install
 cd ..
 
+# Compile xCrypt
+export PREFIX=$PRIMARY/build/root/
+export BUILD=arm64-linux
+export HOST=aarch64-linux-gnu
+export COMPILER=aarch64-linux-gnu-gcc
+git clone https://github.com/besser82/libxcrypt
+cd libxcrypt/
+./autogen.sh CC=$COMPILER --prefix=$PREFIX
+./configure CC=$COMPILER --prefix=$PREFIX --host=$HOST
+make -j8 install
+cd ..
+
+# Compile DropBear
+git clone https://github.com/mkj/dropbear
+cd dropbear/
+CFLAGS="-I./ -I$PRIMARY/libxcrypt/" LDFLAGS="-L$PRIMARY/libxcrypt/.libs/ -Wl,-rpath,$PRIMARY/libxcrypt/.libs/" CC=$COMPILER ./configure --build=$BUILD --host=$HOST --prefix=$PREFIX --disable-zlib
+sed -i.bak '5i #define HAVE_CRYPT 1' src/sysoptions.h
+sed -i.bak '5i #define HAVE_SETRESGID 1' src/sysoptions.h
+make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp" -j8 install
+cd ..
+
 # Prep RootFS
 cd build/root
-mkdir -p etc/init.d proc sys dev tmp var/log 
+mkdir -p etc/init.d etc/dropbear proc sys dev tmp var/log
 chmod 777 tmp
 sudo mknod dev/console c 5 1
+touch etc/passwd
 cd ../..
 cp device_configs/inittab build/root/etc
 cp device_configs/rcS build/root/etc/init.d
+cp device_configs/usbether build/root/etc/init.d
 sudo chmod +x build/root/etc/init.d/rcS
+sudo chmod +x build/root/etc/init.d/usbether
 cp -r /usr/aarch64-linux-gnu/lib/* build/root/lib
+
+# Create SSH passwords
+sudo useradd --prefix $PRIMARY/build/root -u 0 -s /bin/sh -M root
+sudo passwd --prefix $PRIMARY/build/root root
+dropbearkey -t rsa -f $PRIMARY/build/root/etc/dropbear/dropbear_rsa_host_key
 
 # Compile and Copy App
 cd CarDisplay

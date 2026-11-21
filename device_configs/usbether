@@ -1,0 +1,9 @@
+#!/bin/sh
+while ! ip a | grep "usb0" > /dev/null; do
+  sleep 1
+done
+mkdir /dev/pts
+mount devpts /dev/pts -t devpts
+ip address add 192.168.7.2/24 dev usb0
+ip link set usb0 up
+dropbear

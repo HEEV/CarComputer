@@ -10,4 +10,9 @@ To build:
 ./create-image.sh
 ```
 
-We reqiure the aarch64-linux-gnu toolchain to compile everything for the RPI 5, make sure to have that installed, as well as make, cmake, and losetup.
+Required compile commands:
+- aarch64-linux-gnu-gcc
+- cmake
+- make
+- losetup
+- dropbear
